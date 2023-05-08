@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:email_validator/email_validator.dart';
 import 'package:usdtwalletmobile/main.dart';
 
 import 'userInfoScreen.dart';
@@ -55,38 +54,46 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
   Future<void> _login() async {
-    setState(() {
-      _isLoading = true;
-    });
-    final url = Uri.parse(ApiService.baseUrl + '/users/login');
-    final accessToken = await getAccessToken();
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': '$accessToken',
-      },
-      body: jsonEncode({
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      }),
-    );
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      final url = Uri.parse(ApiService.baseUrl + '/users/login');
+      final accessToken = await getAccessToken();
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': '$accessToken',
+        },
+        body: jsonEncode({
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        }),
+      );
 
-  if (response.statusCode == 200) {
-    final accessToken = jsonDecode(response.body)['accessToken'];
-    await saveAccessToken(accessToken);
-    final decodedResponse = jsonDecode(response.body);
-    final role = decodedResponse['user']['role'];
-    _onLoginSuccess(role);
-  } else {
-    setState(() {
-      _errorMessage = jsonDecode(response.body)['message'];
-    });
-  }
-
-  setState(() {
-    _isLoading = false;
-  });
+      if (response.statusCode == 200) {
+        final accessToken = jsonDecode(response.body)['accessToken'];
+        await saveAccessToken(accessToken);
+        final decodedResponse = jsonDecode(response.body);
+        final role = decodedResponse['user']['role'];
+        _onLoginSuccess(role);
+      } else {
+        setState(() {
+          _isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login Error. Try again later')),
+          );
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Server Error'),
+      ));
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override

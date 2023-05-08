@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:usdtwalletmobile/Screens/userInfoScreen.dart';
 import 'package:usdtwalletmobile/api/api_service.dart';
 import '../auth.dart';
-import '../main.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -20,6 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordRepeatController = TextEditingController();
 
   Future<void> _register() async {
+    try{
+
     final username = _usernameController.text;
     final email = _emailController.text;
     final password = _passwordController.text;
@@ -75,6 +76,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
       );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text('Server Error. Try again later'),
+    ));
+    setState(() {
+
+    });
     }
   }
 

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../auth.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://8.210.33.51:3000';
 
   static Future<http.Response> fetchUserCounts() async {
     final url = baseUrl + 'admin/user-counts';

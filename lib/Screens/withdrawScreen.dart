@@ -25,56 +25,70 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   }
 
   Future<void> _fetchUserInfo() async {
-    final accessToken = await getAccessToken();
-    final response = await http.get(Uri.parse('http://localhost:3000/users/info'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': '$accessToken',
-        });
+    try {
+      final accessToken = await getAccessToken();
+      final response = await http.get(
+          Uri.parse(ApiService.baseUrl + '/users/info'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': '$accessToken',
+          });
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      setState(() {
-        user = User(
-          id: responseData['user']['id'],
-          username: responseData['user']['username'],
-          email: responseData['user']['email'],
-          walletBalance: responseData['user']['walletBalance'],
-          walletAddress: responseData['user']['walletAddress'],
-        );
-      });
-    } else {
-      throw Exception('Failed to fetch user info');
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        setState(() {
+          user = User(
+            id: responseData['user']['id'],
+            username: responseData['user']['username'],
+            email: responseData['user']['email'],
+            walletBalance: responseData['user']['walletBalance'],
+            walletAddress: responseData['user']['walletAddress'],
+          );
+        });
+      } else {
+        throw Exception('Failed to fetch user info');
+      }
+    }catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Server error. Please try again later.'),
+      ));
     }
   }
 
-  Future<void> _makeDeposit() async {
-    if (_addressController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter an address')),
-      );
-      return;
-    }
+  Future<void> _makeWithdraw() async {
+    try {
+      if (_addressController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please enter an address')),
+        );
+        return;
+      }
 
-    final url = ApiService.baseUrl + '/wallet/withdraw';
-    final accessToken = await getAccessToken();
-    final headers = {
-      'Authorization': '$accessToken',
-    };
-    final body = {
-      'amount': _amountController.text,
-      'address': _addressController.text,
-    };
+      final url = ApiService.baseUrl + '/wallet/withdraw';
+      final accessToken = await getAccessToken();
+      final headers = {
+        'Authorization': '$accessToken',
+      };
+      final body = {
+        'amount': _amountController.text,
+        'address': _addressController.text,
+      };
 
-    final response = await http.post(Uri.parse(url), headers: headers, body: body);
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Withdraw successful')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Withdraw failed')),
-      );
+      final response = await http.post(
+          Uri.parse(url), headers: headers, body: body);
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Withdraw successful')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Withdraw failed')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Server error. Please try again later.'),
+      ));
     }
   }
 
@@ -109,29 +123,33 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter an amount';
                   }
+                  if (double.tryParse(value) == null || double.parse(value) < 1) {
+                    return 'Please enter a valid amount';
+                  }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _addressController,
                 decoration: InputDecoration(
-                  labelText: 'User Address',
+                  labelText: 'External Address',
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an address';
-                  }
-                  return null;
-                },
+
               ),
               SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    _makeDeposit();
+                    _makeWithdraw();
                   }
                 },
                 child: Text('Make a Withdraw'),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: Size(200, 50),
+                ),
               ),
             ],
           ),

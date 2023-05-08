@@ -35,6 +35,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   List<Transaction> _transactions = [];
+  bool _serverAnswer = false;
 
   @override
   void initState() {
@@ -43,38 +44,58 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _fetchTransactions() async {
-    final accessToken = await getAccessToken();
-    final url = Uri.parse(ApiService.baseUrl + '/wallet/history');
-    final headers = {
-      'Authorization': '$accessToken',
-    };
-    final response = await http.get(url, headers: headers);
-    final responseData = await json.decode(response.body);
+    try {
+      final accessToken = await getAccessToken();
+      final url = Uri.parse(ApiService.baseUrl + '/wallet/history');
+      final headers = {
+        'Authorization': '$accessToken',
+      };
+      final response = await http.get(url, headers: headers);
+      final responseData = await json.decode(response.body);
 
-    setState(() {
-      _transactions = responseData.map<Transaction>((transactionData) {
-        final id = transactionData['id'] ?? '';
-        final senderUsername = transactionData['sender_id'] ?? '';
-        final receiverUsername = transactionData['receiver_id'] ?? '';
-        final amount = transactionData['amount'] ?? '';
-        final timestamp = DateTime.parse(transactionData['timestamp_'] ?? '');
-        final status = transactionData['status'] ?? '';
-        final type = transactionData['type_'] ?? '';
-        return Transaction(
-          id: id,
-          senderId: senderUsername,
-          receiverId: receiverUsername,
-          amount: amount,
-          timestamp: timestamp,
-          status: status,
-          type: type,
-        );
-      }).toList();
-    });
+      setState(() {
+        _transactions = responseData.map<Transaction>((transactionData) {
+          final id = transactionData['id'] ?? '';
+          final senderUsername = transactionData['sender_id'] ?? '';
+          final receiverUsername = transactionData['receiver_id'] ?? '';
+          final amount = transactionData['amount'] ?? '';
+          final timestamp = DateTime.parse(transactionData['timestamp_'] ?? '');
+          final status = transactionData['status'] ?? '';
+          final type = transactionData['type_'] ?? '';
+          return Transaction(
+            id: id,
+            senderId: senderUsername,
+            receiverId: receiverUsername,
+            amount: amount,
+            timestamp: timestamp,
+            status: status,
+            type: type,
+          );
+        }).toList();
+        _serverAnswer = true;
+      });
+    }catch (e) {
+      setState(() {
+        _serverAnswer = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Server error. Please try again later.'),
+      ));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_serverAnswer == false) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Transaction History'),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    } else {
     return Scaffold(
       appBar: AppBar(
         title: Text('Transaction History'),
@@ -115,5 +136,5 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       drawer: AppMenu(),
     );
-  }
+  }}
 }

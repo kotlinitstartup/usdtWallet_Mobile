@@ -87,7 +87,7 @@ class MainScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Main Screen',
+          'USDT Wallet',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,

@@ -50,32 +50,39 @@ class _DepositScreenState extends State<DepositScreen> {
   }
 
   Future<void> _makeDeposit() async {
-    if (_addressController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter an address')),
-      );
-      return;
-    }
+    try {
+      if (_addressController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please enter an address')),
+        );
+        return;
+      }
 
-    final url = ApiService.baseUrl + '/wallet/deposit';
-    final accessToken = await getAccessToken();
-    final headers = {
-      'Authorization': '$accessToken',
-    };
-    final body = {
-      'amount': _amountController.text,
-      'address': _addressController.text,
-    };
+      final url = ApiService.baseUrl + '/wallet/deposit';
+      final accessToken = await getAccessToken();
+      final headers = {
+        'Authorization': '$accessToken',
+      };
+      final body = {
+        'amount': _amountController.text,
+        'address': _addressController.text,
+      };
 
-    final response = await http.post(Uri.parse(url), headers: headers, body: body);
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deposit successful')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deposit failed')),
-      );
+      final response = await http.post(
+          Uri.parse(url), headers: headers, body: body);
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Deposit successful')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Deposit failed')),
+        );
+      }
+    }catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Server error. Please try again later.'),
+      ));
     }
   }
 
@@ -110,6 +117,9 @@ class _DepositScreenState extends State<DepositScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter an amount';
                   }
+                  if (double.tryParse(value) == null || double.parse(value) < 1) {
+                    return 'Please enter a valid amount';
+                  }
                   return null;
                 },
               ),
@@ -134,6 +144,12 @@ class _DepositScreenState extends State<DepositScreen> {
                   }
                 },
                 child: Text('Make a Deposit'),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: Size(200, 50),
+                ),
               ),
             ],
           ),
